@@ -11,9 +11,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.8, 3.7]  # Include Python 3.7 to fix the InterpreterNotFound error
+
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -21,11 +23,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
-      run: chmod +x ./.travis/install && ./.travis/install
+      run: pip install tox-travis
     - name: Run tests
-      env:
-        TOXENV: py38
-      run: chmod +x ./.travis/run && ./.travis/run tox
-    - name: Upload coverage to Coveralls
-      if: success()
-      run: coveralls
+      run: tox
