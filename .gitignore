@@ -1,9 +1,9 @@
-*.pyc
-_trial_temp
-docs/_build
-*egg-info
-.tox
-.coverage
-venv
-dist
-build
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
