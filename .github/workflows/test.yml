@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8"]
+        python-version: [3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -26,13 +26,14 @@ jobs:
 
     - name: Install dependencies
       run: |
-        if [ -n "${{ env.SPHINX_VERSION }}" ]; then
-          pip install sphinx==${{ env.SPHINX_VERSION }}
-        else
-          pip install sphinx
-        fi
-        pip install -r requirements-travis.txt
+        pip install black mypy
+        pip install --editable .[dev]
 
-    - name: Run inspekt
-      run: |
-        inspekt checkall --disable-style E501,E265,W601,W605,E402,E722,E741 --no-license-check || true
+    - name: Run mypy
+      run: mypy src/
+
+    - name: Run make check
+      run: make check
+
+    - name: Run make check-tests
+      run: make check-tests
