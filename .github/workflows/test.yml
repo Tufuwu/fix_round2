@@ -1,4 +1,4 @@
-name: Python application
+name: CI
 
 on:
   push:
@@ -10,11 +10,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ["3.8", "3.9", "pypy-3.8"]
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -24,35 +23,22 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
     - name: Install dependencies
       run: |
-        pip install pipenv
-        pipenv install --dev
+        python -m pip install --upgrade pip
 
-    - name: Lint with flake8
+    - name: Make setconf.py executable
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 .
-        # exit-zero treats all errors as warnings.
-        flake8 . --exit-zero --select=C,E,F,W
+        chmod +x setconf.py
 
-    - name: Test with pytest
-      run: pytest
-
-    - name: Notify IRC
-      if: failure()
+    - name: Run setconf.py
       run: |
-        echo "Build failed, sending notification to IRC"
-        # Add your IRC notification script or command here
+        ./setconf.py --test
 
-    - name: Notify email
-      if: failure()
-      run: echo "Build failed, but email notifications are disabled"
+    - name: Make test.sh executable
+      run: |
+        chmod +x testcases/test.sh
+
+    - name: Run tests
+      run: |
+        cd testcases && ./test.sh
