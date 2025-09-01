@@ -1,4 +1,4 @@
-name: Python application
+name: Python package
 
 on:
   push:
@@ -10,11 +10,18 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.8, 3.9, pypy-3.8]
+        django-version: ['Django>=2.2,<2.3', 'Django>=3.0,<3.2', 'Django>=3.2,<3.3']
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: --health-cmd "mongo --eval 'db.runCommand({ ping: 1 })'" --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
     - uses: actions/checkout@v2
@@ -24,17 +31,20 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install Poetry
+      run: pip install poetry
+
     - name: Install dependencies
       run: |
-        sudo apt-get -y update
-        pip install pytest-cov
-        pip install .[ja]
+        poetry install -q
+        poetry run pip install -q ${{ matrix.django-version }}
 
-    - name: Test with pytest
-      run: python3 -m pytest
+    - name: Wait for MongoDB to be ready
+      run: |
+        until nc -z localhost 27017; do
+          echo "Waiting for MongoDB..."
+          sleep 1
+        done
 
-    - name: Make test.sh executable
-      run: chmod +x test.sh
-
-    - name: Run additional tests
-      run: ./test.sh
+    - name: Run tests
+      run: poetry run python -m pytest
